@@ -52,11 +52,17 @@ python img2hex.py ../images/professional_test.jpg
 *This creates `sim/input.hex`.*
 
 ### 3. Generate and Run Hardware Simulation
-Because professional FPGA repositories version-control source code rather than binary project files, you must generate the Vivado project first:
-```bash
-C:\AMDDesignTools\2025.2\Vivado\bin\vivado.bat -mode batch -source scripts\build_project.tcl
-```
-Open `Vision_Project.xpr` in Vivado and click **Run Simulation**.
+Because professional FPGA repositories version-control source code rather than binary project files, you must generate the Vivado project on your local machine using the provided Tcl script.
+
+**To generate the project:**
+1. Open Vivado.
+2. At the bottom of the start screen, click **Tcl Console**.
+3. Use the `cd` command to navigate to the cloned repository folder (e.g., `cd C:/path/to/Hardware-Vision-Accelerator`).
+4. Run the build script: `source scripts/build_project.tcl`
+
+Vivado will automatically build the `Vision_Project.xpr` project, import all RTL and testbenches, and set up the simulation environment. Once the project opens, click **Run Simulation** on the left sidebar.
+
+*The Testbench (`tb_image_processor.sv`) will automatically read the hex file, pump the pixels through the RTL line buffers and math engine, and write the hardware's results to `sim/output.hex`.*
 
 ### 4. Post-process the Result (Hardware -> Software)
 Reconstruct the hardware's hex output back into a viewable image.
