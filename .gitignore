@@ -23,4 +23,5 @@ sim/
 .Trashes
 ehthumbs.db
 Thumbs.db
-*.xpr 
+*.xpr
+dfx_runtime.txt
