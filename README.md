@@ -14,26 +14,41 @@ The accelerator processes a continuous stream of pixels (e.g., from an AXI-Strea
 
 To achieve a 3x3 convolution window on a streaming 1D pixel bus, the design implements **Synchronous Line Buffers** using FPGA True Dual-Port Block RAM (`RAMB18E1`) to temporarily store rows of the image.
 
-```text
-[Input Pixel Stream] 
-       │
-       ▼
- ┌─────────────┐
- │Line Buffer 1├─────────► (Row N-1) ─────────┐
- └─────────────┘                              │
-       │                                      │
-       ▼                                      ▼
- ┌─────────────┐                        ┌───────────┐    ┌────────────┐
- │Line Buffer 2├─────────► (Row N-2) ───► 3x3 Window├────► Sobel Math ├──► [Edge Pixel Out]
- └─────────────┘                        │ Formation │    │DSP Pipeline│
-                                        └───────────┘    └────────────┘
-(Current Row N) ──────────────────────────────┘
+```mermaid
+flowchart LR
+    In[Input Pixel Stream] --> L1[Line Buffer 1]
+    In --> |Current Row N| W[3x3 Window\nFormation]
+    L1 --> L2[Line Buffer 2]
+    L1 --> |Row N-1| W
+    L2 --> |Row N-2| W
+    W --> DSP[Sobel Math\nDSP Pipeline]
+    DSP --> Out[Edge Pixel Out]
 ```
 
 ### Key Modules:
 * `line_buffer.sv`: Infers 2-cycle latency Synchronous Block RAM to delay pixels by exactly 1 and 2 row widths, creating a perfectly aligned 3x3 window in the same clock cycle. 
 * `sobel_core.sv`: A pipelined DSP datapath that computes the `Gx` and `Gy` gradients simultaneously using fixed-point arithmetic, taking the absolute sum approximation `(|Gx| + |Gy|)` to threshold edges.
 * `image_processor_top.sv`: The top-level wrapper that manages valid signals, pipeline alignment, and connects the line buffers to the math core.
+
+## 📁 Project Structure
+
+```text
+├── rtl/                        # Synthesizable SystemVerilog Hardware Code
+│   ├── image_processor_top.sv  # Top-level module
+│   ├── line_buffer.sv          # Synchronous BRAM-based delay line
+│   └── sobel_core.sv           # Pipelined Sobel math datapath
+├── tb/                         # Verification Environment
+│   └── tb_image_processor.sv   # File I/O testbench for Co-Simulation
+├── constraints/                # FPGA Physical & Timing Constraints
+│   └── vision.xdc              # 50MHz Clock & I/O definitions
+├── scripts/                    # Automation & Python Utilities
+│   ├── build_project.tcl       # Auto-generates the Vivado .xpr project
+│   ├── img2hex.py              # Pre-processor: image -> .hex
+│   └── hex2img.py              # Post-processor: .hex -> image
+├── images/                     # Test images and output results
+├── sim/                        # Simulation hex dumps (git-ignored)
+└── README.md                   # Documentation
+```
 
 ##  Quick Start (Co-Simulation)
 
